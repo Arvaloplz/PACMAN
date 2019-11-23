@@ -1,0 +1,3629 @@
+{Alvaro Andrade Ardiles
+19.551.638-3 
+
+}
+program PAC_MAN;
+begin
+asm
+
+{--------------------------------------------------------------main-------------------------------------------------}
+	call @login
+	call @pausa
+	call @cls
+{---------------------------------------------------------------------------------------------------------------------}
+	{===================================================}
+		@login: {Proceso de pantalla }
+	{===================================================}
+		call @cls 							{Limpieza pantalla}
+		
+		mov dh,$9 							{Set cursor fila}
+		mov dl,$5 							{Set cursor columna}
+		call @mov_cursor			{mover cursor de la pantalla}
+		call @print_title 				{Imprimo texto de bienvenida}
+		
+		mov dh,$18 							{Set cursor fila}
+		mov dl,$00 							{Set cursor columna}
+		call @mov_cursor 			{mover cursor de la pantalla}
+		
+		call @print_ingrese_rut 			{Imprimo mas texto de bienvenida}
+		call @ingreso_rut 					{Ingreso rut, con el manejo del error si es necesario}
+		mov dh,$18 							{Set cursor fila}
+		mov dl,$00 							{Set cursor columna}
+		call @mov_cursor 			{mover cursor de la pantalla}
+
+		call @print_rut_correcto			{Imprime que el RUT ingresado es el correcto}
+		call @pausa
+	ret	
+		@mov_cursor: {mover cursor de la pantalla. Coordenadas se establecen en DX, previamente ingresadas}
+		{===================================================}
+			push ax
+			push bx
+			
+			mov ah,$02 	{Int 10/AH=02h - VIDEO - SET CURSOR POSITION}	
+			mov bx,$00 	{Numero de pagina}
+			int $10 	{func call}
+			
+			pop bx
+			pop ax
+		ret
+		@print_title: {LOMBRIZ SOLITARIA (AHORA CON UN 25% MAS DE BAJO PRESUPUESTO!!!111)}
+		{===================================================}
+		push ax
+		
+		mov al,'P'
+		call @escribir
+		mov al,'A'
+		call @escribir
+		mov al,'C'
+		call @escribir
+		mov al,'-'
+		call @escribir
+		mov al,'M'
+		call @escribir
+		mov al,'A'
+		call @escribir
+		mov al,'N'
+		call @escribir
+		mov al,' '
+		call @escribir
+		mov al,'T'
+		call @escribir
+		mov al,'a'
+		call @escribir
+		mov al,'r'
+		call @escribir
+		mov al,'e'
+		call @escribir
+		mov al,'a'
+		call @escribir
+		mov al,' '
+		call @escribir
+		mov al,' '
+		call @escribir
+		mov al,'1'
+		call @escribir
+		mov al,' '
+		call @escribir
+		mov al,'-'
+		call @escribir
+		mov al,'B'
+		call @escribir
+		mov al,'y'
+		call @escribir
+		mov al,':'
+		call @escribir
+		mov al,' '
+		call @escribir
+		mov al,' '
+		call @escribir
+		mov al,'A'
+		call @escribir
+		mov al,'l'
+		call @escribir
+		mov al,'v'
+		call @escribir
+		mov al,'a'
+		call @escribir
+		mov al,'r'
+		call @escribir
+		mov al,'o'
+		call @escribir
+		mov al,' '
+		call @escribir
+		mov al,'A'
+		call @escribir
+		mov al,'n'
+		call @escribir
+		mov al,'d'
+		call @escribir
+		mov al,'r'
+		call @escribir
+		mov al,'a'
+		call @escribir
+		mov al,'d'
+		call @escribir
+		mov al,'e'
+		call @escribir
+		mov al,'.'
+		
+		pop ax
+		ret
+	
+		@escribir: {Escribo algo donde actualmente esta el cursor, caracter en AL}
+		{===================================================}
+			push ax
+			mov ah,$0E 	{Int 10/AH=0Eh - VIDEO - TELETYPE OUTPUT}
+			int $10		{func call}
+			pop ax
+		ret
+	
+	
+		@print_ingrese_rut: 
+		{===================================================}
+		push ax
+		
+		mov al,'I'
+		call @escribir
+		mov al,'n'
+		call @escribir
+		mov al,'g'
+		call @escribir
+		mov al,'r'
+		call @escribir
+		mov al,'e'
+		call @escribir
+		mov al,'s'
+		call @escribir
+		mov al,'e'
+		call @escribir
+		mov al,' '
+		call @escribir
+		mov al,'s'
+		call @escribir
+		mov al,'u'
+		call @escribir
+		mov al,' '
+		mov al,'R'
+		call @escribir
+		mov al,'U'
+		call @escribir
+		mov al,'T'
+		call @escribir
+		mov al,':'
+		call @escribir
+		mov al,' '
+		call @escribir
+		
+		pop ax
+		ret
+	@ingreso_rut: {Rutina para el ingreso y validacion del rut}
+	
+		mov cx,$9
+		@rut_input:
+			call @obtener_tecla_espera 		{en AL tendre la tecla ingresada}
+			call @ascii2num 				{Obtengo en AH el numero en decimal...carry? las pelotas}
+			call @caracter_valido			{Es un caracter valido?}
+			call @escribir					{Mostrarlo en pantalla si es asi}
+		loop @rut_input						{Volver a repetir el proceso}
+		call @cls 
+	ret
+		@obtener_tecla_espera: {Obtiene una tecla, pausando al programa para obtenerla}
+		{===================================================}
+			mov ah,00 	{Int 16/AH=00h - KEYBOARD - GET KEYSTROKE}
+			int $16		{func call}
+		ret
+		
+		@ascii2num: {Obtengo en AH el numero ASCII en decimal.}
+		{===================================================}
+			mov ah,al
+			sub ah,$30	{Eso se logra restando 30 al registro}
+		ret
+		
+		@caracter_valido: {Comprueba si el caracter ingresado en CX es valido como dígito de RUT}
+		{===================================================}
+			cmp cx,$9
+			je @r_check_1
+			cmp cx,$8
+			je @r_check_2
+			cmp cx,$7
+			je @r_check_3
+			cmp cx,$6
+			je @r_check_4
+			cmp cx,$5
+			je @r_check_5
+			cmp cx,$4
+			je @r_check_6
+			cmp cx,$3
+			je @r_check_7
+			cmp cx,$2
+			je @r_check_8
+			cmp cx,$1
+			je @r_check_9
+		ret
+{=================================================================================================}
+											{DATOS - MAPA DE TECLAS PARA RUT}
+{=================================================================================================}
+				@r_check_1:
+					cmp ah,$1
+					jne @r_error
+				ret
+				@r_check_2:
+					cmp ah,$9
+					jne @r_error
+				ret
+				@r_check_3:
+					cmp ah,$5
+					jne @r_error
+				ret
+				@r_check_4:
+					cmp ah,$5
+					jne @r_error
+				ret
+				@r_check_5:
+					cmp ah,$1
+					jne @r_error
+				ret
+				@r_check_6:
+					cmp ah,$6
+					jne @r_error
+				ret
+				@r_check_7:
+					cmp ah,$3
+					jne @r_error
+				ret
+				@r_check_8:
+					cmp ah,$8
+					jne @r_error
+				ret
+				@r_check_9:
+					cmp ah,$3
+					jne @r_error
+				ret
+		
+					@r_error : {Rutina a ejecutar si no ingresa bien el rut}
+					{===================================================}
+						call @cls 					{Limpieza pantalla}
+						
+						mov dh,$18 					{Set cursor fila}
+						mov dl,$00 					{Set cursor columna}
+						call @mov_cursor 	{mover cursor de la pantalla}
+						call @print_error_rut
+						call @pausa
+						call @fin
+		
+							@print_error_rut: {un error para el rut}
+							{===================================================}
+							push ax
+							
+							mov al,'R'
+							call @escribir
+							mov al,'u'
+							call @escribir
+							mov al,'t'
+							call @escribir
+							mov al,' '
+							call @escribir
+							mov al,'I'
+							call @escribir
+							mov al,'N'
+							call @escribir
+							mov al,'V'
+							call @escribir
+							mov al,'A'
+							call @escribir
+							mov al,'L'
+							call @escribir
+							mov al,'I'
+							call @escribir
+							mov al,'D'
+							call @escribir
+							mov al,'O'
+							call @escribir
+							pop ax
+							ret
+						
+							@pausa: {Pausa un programa, instando al usuario presionar una tecla para continuar}
+							{===================================================}
+								push ax
+								mov ah,00	{Int 16/AH=00h - KEYBOARD - GET KEYSTROKE}
+								int $16     {func call}
+								pop ax
+								call @cls
+								jmp @print_mapa
+
+							ret
+	
+
+
+		@print_rut_correcto: {un aviso para el rut correcto}
+		{===================================================}
+		push ax
+		
+
+		call @escribir
+		mov al,'p'
+		call @escribir
+		mov al,'r'
+		call @escribir
+		mov al,'e'
+		call @escribir
+		mov al,'s'
+		call @escribir
+		mov al,'i'
+		call @escribir
+		mov al,'o'
+		call @escribir
+		mov al,'e'
+		call @escribir
+		mov al,'n'
+		call @escribir
+		mov al,'e'
+		call @escribir
+		mov al,' '
+		call @escribir
+		mov al,'c'
+		call @escribir
+		mov al,'u'
+		call @escribir
+		mov al,'a'
+		call @escribir
+		mov al,'l'
+		call @escribir
+		mov al,'q'
+		call @escribir
+		mov al,'u'
+		call @escribir
+		mov al,'i'
+		call @escribir
+		mov al,'e'
+		call @escribir
+		mov al,'r'
+		call @escribir
+		mov al,' '
+		call @escribir
+		mov al,'t'
+		call @escribir
+		mov al,'e'
+		call @escribir
+		mov al,'c'
+		call @escribir
+		mov al,'l'
+		call @escribir
+		mov al,'a'
+		call @escribir
+		mov al,' '
+		call @escribir
+		mov al,'p'
+		call @escribir
+		mov al,'a'
+		call @escribir
+		mov al,'r'
+		call @escribir
+		mov al,'a'
+		call @escribir
+		mov al,' '
+		call @escribir
+		mov al,'j'
+		call @escribir
+		mov al,'u'
+		call @escribir
+		mov al,'g'
+		call @escribir
+		mov al,'a'
+		call @escribir
+		mov al,'r'
+		call @escribir
+		mov al,'-'
+		call @escribir
+		mov al,'>'
+		call @escribir
+
+
+		
+		pop ax
+		ret
+	
+	
+	@cls: {Limpia la pantalla, uso interrupcion 10h, ax=0600h}
+	{===================================================}
+		push ax
+		push bx
+		push cx
+	
+		mov ah,$06 	{INT= 10h/AX= 0600h, clear screen TODO buscar bien}
+		mov al,$0 	{lineas a borrar=todas}
+		mov bh,$07 	{atributo_a_usar_lineas_borradas=??? (Debe estar en $07, de lo contrario obtengo pantalla en blanco)}
+
+		mov ch,$0 	{inicio fila=0}
+		mov cl,$0 	{inicio columna=0}
+		mov dh,$18 	{fin fila=18,24 decimal}
+		mov dl,$4f 	{fin columna=4F=79 decimal}
+
+		int $10 	{func call}
+		
+		pop cx
+		pop bx
+		pop ax
+	ret
+	@print_mapa:{-----------------------------------------------------------------}
+	{-------------------------------------- imprime mapa---------------}
+	{-----------------------------------------------------------------------------}
+	call @score_live
+	call @cuadro_juego
+	call @arena
+	call @puntos
+
+	call @print_juga3
+	jmp  @mandos
+
+
+		@cuadro_juego:{---------------------------------------------------}
+							{CUADRO DE JUEGO}
+{-----------------------------------------------------------------}
+	{---------------- vorde superior---------------------------------}
+	mov bh,$0{-------aqui se utiliza BX para determinar la pagina 0}
+	mov bl,$9{-------se determina el colo del cuadro de juego}
+	mov al,$da{-----caracter------}
+	mov dh,$1{----cordenada fila----}
+	mov dl,$13{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$c4
+	mov dh,$1
+	mov dl,$14
+	mov cx,$3a
+	call @mov_cursor
+	call @dibuja
+	mov al,$bf
+	mov dh,$1
+	mov dl,$4e
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+	{-------------------------------vorde izquierdo---------------------------}
+	mov al,$b3
+	mov dh,$2 
+	mov dl,$13
+	mov cx,$1 
+	call @mov_cursor
+	call @dibuja
+	mov dh,$3 
+	mov dl,$13
+	mov cx,$1  
+	call @mov_cursor
+	call @dibuja
+	mov al,$b3
+	mov dh,$4 
+	mov dl,$13 
+	call @mov_cursor
+	call @dibuja
+	mov dh,$5 
+	mov dl,$13 
+	call @mov_cursor
+	call @dibuja
+	mov dh,$6 
+	mov dl,$13 
+	call @mov_cursor
+	call @dibuja
+	mov dh,$7 
+	mov dl,$13 
+	call @mov_cursor
+	call @dibuja
+	mov dh,$8 
+	mov dl,$13 
+	call @mov_cursor
+	call @dibuja
+	mov dh,$9 
+	mov dl,$13 
+	call @mov_cursor
+	call @dibuja
+	mov dh,$a 
+	mov dl,$13 
+	call @mov_cursor
+	call @dibuja
+	mov dh,$b 
+	mov dl,$13 
+	call @mov_cursor
+	call @dibuja
+	mov dh,$c 
+	mov dl,$13 
+	call @mov_cursor
+	call @dibuja
+	mov dh,$d 
+	mov dl,$13 
+	call @mov_cursor
+	call @dibuja
+	mov dh,$e 
+	mov dl,$13 
+	call @mov_cursor
+	call @dibuja
+	mov dh,$f 
+	mov dl,$13 
+	call @mov_cursor
+	call @dibuja
+	mov dh,$10 
+	mov dl,$13 
+	call @mov_cursor
+	call @dibuja
+	mov dh,$11 
+	mov dl,$13 
+	call @mov_cursor
+	call @dibuja
+	mov dh,$12 
+	mov dl,$13 
+	call @mov_cursor
+	call @dibuja
+	mov dh,$13 
+	mov dl,$13 
+	call @mov_cursor
+	call @dibuja
+	mov dh,$14 
+	mov dl,$13 
+	call @mov_cursor 
+	call @dibuja
+	mov dh,$15 
+	mov dl,$13 
+	call @mov_cursor
+	call @dibuja
+	mov dh,$16 
+	mov dl,$13 
+	call @mov_cursor
+	call @dibuja
+	mov dh,$17
+	mov dl,$13 
+	call @mov_cursor
+	call @dibuja
+	{ ----------------------------vorde derecho --------------------------------}
+	mov dh,$2 
+	mov dl,$4e 
+	call @mov_cursor
+	call @dibuja
+	mov dh,$3 
+	mov dl,$4e 
+	call @mov_cursor
+	call @dibuja
+	mov dh,$4 
+	mov dl,$4e 
+	call @mov_cursor
+	call @dibuja
+	mov dh,$5 
+	mov dl,$4e 
+	call @mov_cursor
+	call @dibuja
+	mov dh,$6 
+	mov dl,$4e 
+	call @mov_cursor
+	call @dibuja
+	mov dh,$7 
+	mov dl,$4e 
+	call @mov_cursor
+	call @dibuja
+	mov dh,$8 
+	mov dl,$4e 
+	call @mov_cursor
+	call @dibuja
+	mov dh,$9 
+	mov dl,$4e 
+	call @mov_cursor
+	call @dibuja
+	mov dh,$a 
+	mov dl,$4e 
+	call @mov_cursor
+	call @dibuja
+	mov dh,$b 
+	mov dl,$4e 
+	call @mov_cursor
+	call @dibuja
+	mov dh,$c 
+	mov dl,$4e 
+	call @mov_cursor
+	call @dibuja
+	mov dh,$d 
+	mov dl,$4e 
+	call @mov_cursor
+	call @dibuja
+	mov dh,$e 
+	mov dl,$4e 
+	call @mov_cursor
+	call @dibuja
+	mov dh,$f 
+	mov dl,$4e 
+	call @mov_cursor
+	call @dibuja
+	mov dh,$10 
+	mov dl,$4e 
+	call @mov_cursor
+	call @dibuja
+	mov dh,$11 
+	mov dl,$4e 
+	call @mov_cursor
+	call @dibuja
+	mov dh,$12 
+	mov dl,$4e 
+	call @mov_cursor
+	call @dibuja
+	mov dh,$13 
+	mov dl,$4e 
+	call @mov_cursor
+	call @dibuja
+	mov dh,$14 
+	mov dl,$4e 
+	call @mov_cursor
+	call @dibuja
+	mov dh,$15 
+	mov dl,$4e 
+	call @mov_cursor
+	call @dibuja
+	mov dh,$16 
+	mov dl,$4e 
+	call @mov_cursor
+	call @dibuja
+	mov dh,$17
+	mov dl,$4e 
+	call @mov_cursor
+	call @dibuja
+	{-------------------------- vorde inferior---------------------------------}
+	mov al,$c0
+	mov dh,$17 
+	mov dl,$13
+	mov cx,$1 
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$c4
+	mov dh,$17
+	mov dl,$14
+	mov cx,$3a
+	call @mov_cursor
+	call @dibuja
+	mov al,$d9
+	mov dh,$17
+	mov dl,$4e
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+	call @cursor_off
+ret
+		@dibuja:{se imprime el caracter color especifico luego de mover el cursor}
+		{===================================================}
+ 			mov ah,$09 	{Int 10/AH=02h - VIDEO - SET CURSOR POSITION}	
+			int $10 	{func call}
+		ret
+@score_live:{-------------------------------------------------------------------------------}
+												{SCORE}
+{------------------------------------------------------------------------------------------}
+	mov bh,$0{-------aqui se utiliza BX para determinar la pagina 0}
+	mov bl,$f{-------se determina el colo del cuadro de juego}
+	mov al,'P'{-----caracter------}
+	mov dh,$5{----cordenada fila----}
+	mov dl,$6{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja
+    mov al,'U'
+    mov dl,$7
+    call @mov_cursor
+    call @dibuja 
+    mov al,'N'
+    mov dl,$8
+    call @mov_cursor
+    call @dibuja 
+    mov al,'T'
+    mov dl,$9
+    call @mov_cursor
+    call @dibuja
+    mov al,'A'
+    mov dl,$a
+    call @mov_cursor
+    call @dibuja 
+    mov al,'J'
+    mov dl,$b
+    call @mov_cursor
+    call @dibuja 
+    mov al,'E'
+    mov dl,$c
+    call @mov_cursor
+    call @dibuja 
+    mov al,':'
+    mov dl,$d
+    call @mov_cursor
+    call @dibuja 
+    mov al,'0'
+    mov dh,$6{----cordenada fila----}
+    mov dl,$7{----cordenada fila----}
+    mov cx,$4 
+    call @mov_cursor
+    call @dibuja 
+{-----------------------------------------------------------------------------------------}
+											{LIFE}
+{------------------------------------------------------------------------------------------}
+	mov al,'V'{-----caracter------}
+	mov dh,$12{----cordenada fila----}
+	mov dl,$6{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja
+    mov al,'I'
+    mov dl,$7
+    call @mov_cursor
+    call @dibuja 
+    mov al,'D'
+    mov dl,$8
+    call @mov_cursor
+    call @dibuja 
+    mov al,'A'
+    mov dl,$9
+    call @mov_cursor
+    call @dibuja
+    mov al,'S'
+    mov dl,$a
+    call @mov_cursor
+    call @dibuja 
+    mov al,':'
+    mov dl,$b
+    call @mov_cursor
+    call @dibuja 
+{-----------------------------------------------------------------------------------------}
+											{PAC MEN VIDA}
+{------------------------------------------------------------------------------------------}
+	mov al,$02{-----caracter------}
+	mov bl,$e
+	mov dh,$14{----cordenada fila----}
+	mov dl,$7{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja
+	mov dh,$14{----cordenada fila----}
+	mov dl,$9{----cordenada fila----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja
+	mov dh,$14{----cordenada fila----}
+	mov dl,$b{----cordenada fila----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja
+
+ret
+{-----------------------------------------------------------------------------------------}
+											{ARENA}
+{------------------------------------------------------------------------------------------}
+@arena:
+	mov bh,$0{-------aqui se utiliza BX para determinar la pagina 0}
+	mov bl,$1{-------se determina el colo del cuadro de juego}
+	mov al,$c9{-----caracter------}
+	mov dh,$2{----cordenada fila----}
+	mov dl,$14{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$cd
+	mov dh,$2
+	mov dl,$15
+	mov cx,$1a
+	call @mov_cursor
+	call @dibuja
+	mov al,$bb
+	mov dh,$2
+	mov dl,$2f
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+	mov al,$c9
+	mov dh,$2
+	mov dl,$32
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+	mov al,$cd
+	mov dh,$2
+	mov dl,$33
+	mov cx,$1a
+	call @mov_cursor
+	call @dibuja
+	mov al,$bb
+	mov dh,$2
+	mov dl,$4d
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+	mov al,$ba{-----caracter------}
+	mov dh,$3{----cordenada fila----}
+	mov dl,$14{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$ba
+	mov dh,$3
+	mov dl,$2f
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+	mov al,$ba
+	mov dh,$3
+	mov dl,$32
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+	mov al,$ba
+	mov dh,$3
+	mov dl,$4d
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+	mov al,$ba{-----caracter------}
+	mov dh,$4{----cordenada fila----}
+	mov dl,$14{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$c9{-----caracter------}
+	mov dh,$4{----cordenada fila----}
+	mov dl,$16{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$cd
+	mov dh,$4
+	mov dl,$17
+	mov cx,$4
+	call @mov_cursor
+	call @dibuja
+	mov al,$bb
+	mov dh,$4
+	mov dl,$1b
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+	mov al,$c9{-----caracter------}
+	mov dh,$4{----cordenada fila----}
+	mov dl,$1d{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$cd
+	mov dh,$4
+	mov dl,$1e
+	mov cx,$f
+	call @mov_cursor
+	call @dibuja
+	mov al,$bb
+	mov dh,$4
+	mov dl,$2d
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+
+	mov al,$ba
+	mov dh,$4
+	mov dl,$2f
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+	mov al,$ba
+	mov dh,$4
+	mov dl,$32
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+	mov al,$c9{-----caracter------}
+	mov dh,$4{----cordenada fila----}
+	mov dl,$34{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$cd
+	mov dh,$4
+	mov dl,$35
+	mov cx,$f
+	call @mov_cursor
+	call @dibuja
+	mov al,$bb
+	mov dh,$4
+	mov dl,$44
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+	mov al,$c9{-----caracter------}
+	mov dh,$4{----cordenada fila----}
+	mov dl,$46{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$cd
+	mov dh,$4
+	mov dl,$47
+	mov cx,$4
+	call @mov_cursor
+	call @dibuja
+	mov al,$bb
+	mov dh,$4
+	mov dl,$4b
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+	mov al,$ba
+	mov dh,$4
+	mov dl,$4d
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+
+
+
+
+
+
+	mov al,$ba{-----caracter------}
+	mov dh,$5{----cordenada fila----}
+	mov dl,$14{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+
+	mov al,$c8{-----caracter------}
+	mov dh,$5{----cordenada fila----}
+	mov dl,$16{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$cd
+	mov dh,$5
+	mov dl,$17
+	mov cx,$4
+	call @mov_cursor
+	call @dibuja
+	mov al,$bc
+	mov dh,$5
+	mov dl,$1b
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+	mov al,$c8{-----caracter------}
+	mov dh,$5{----cordenada fila----}
+	mov dl,$1d{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$cd
+	mov dh,$5
+	mov dl,$1e
+	mov cx,$f
+	call @mov_cursor
+	call @dibuja
+	mov al,$bc
+	mov dh,$5
+	mov dl,$2d
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+
+	mov al,$c8
+	mov dh,$5
+	mov dl,$2f
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+	mov al,$cd
+	mov dh,$5
+	mov dl,$30
+	mov cx,$2
+	call @mov_cursor
+	call @dibuja
+	mov al,$bc
+	mov dh,$5
+	mov dl,$32
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+	mov al,$c8{-----caracter------}
+	mov dh,$5{----cordenada fila----}
+	mov dl,$34{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$cd
+	mov dh,$5
+	mov dl,$35
+	mov cx,$f
+	call @mov_cursor
+	call @dibuja
+	mov al,$bc
+	mov dh,$5
+	mov dl,$44
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+	mov al,$c8{-----caracter------}
+	mov dh,$5{----cordenada fila----}
+	mov dl,$46{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$cd
+	mov dh,$5
+	mov dl,$47
+	mov cx,$4
+	call @mov_cursor
+	call @dibuja
+	mov al,$bc
+	mov dh,$5
+	mov dl,$4b
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+	mov al,$ba
+	mov dh,$5
+	mov dl,$4d
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+
+	mov al,$ba{-----caracter------}
+	mov dh,$5{----cordenada fila----}
+	mov dl,$14{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor
+	call @dibuja
+
+	mov al,$ba
+	mov dh,$5
+	mov dl,$4d
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+
+
+	mov al,$ba{-----caracter------}
+	mov dh,$6{----cordenada fila----}
+	mov dl,$14{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja
+	mov al,$ba
+	mov dh,$6
+	mov dl,$4d
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+
+    mov al,$ba{-----caracter------}
+	mov dh,$7{----cordenada fila----}
+	mov dl,$14{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+
+
+	mov al,$c9{-----caracter------}
+	mov dh,$7{----cordenada fila----}
+	mov dl,$16{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$cd
+	mov dh,$7
+	mov dl,$17
+	mov cx,$4
+	call @mov_cursor
+	call @dibuja
+	mov al,$bb
+	mov dh,$7
+	mov dl,$1b
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+	mov al,$c9{-----caracter------}
+	mov dh,$7{----cordenada fila----}
+	mov dl,$1d{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$cd
+	mov dh,$7
+	mov dl,$1e
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+	mov al,$bb
+	mov dh,$7
+	mov dl,$1f
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+	mov al,$c9{-----caracter------}
+	mov dh,$7{----cordenada fila----}
+	mov dl,$21{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$cd
+	mov dh,$7
+	mov dl,$22
+	mov cx,$1e
+	call @mov_cursor
+	call @dibuja
+	mov al,$bb
+	mov dh,$7
+	mov dl,$40
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+	mov al,$c9{-----caracter------}
+	mov dh,$7{----cordenada fila----}
+	mov dl,$42{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$cd
+	mov dh,$7
+	mov dl,$43
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+	mov al,$bb
+	mov dh,$7
+	mov dl,$44
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+	mov al,$c9{-----caracter------}
+	mov dh,$7{----cordenada fila----}
+	mov dl,$46{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$cd
+	mov dh,$7
+	mov dl,$47
+	mov cx,$4
+	call @mov_cursor
+	call @dibuja
+	mov al,$bb
+	mov dh,$7
+	mov dl,$4b
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+	mov al,$ba
+	mov dh,$7
+	mov dl,$4d
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+
+
+
+
+
+    mov al,$ba{-----caracter------}
+	mov dh,$8{----cordenada fila----}
+	mov dl,$14{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+
+
+	mov al,$c8{-----caracter------}
+	mov dh,$8{----cordenada fila----}
+	mov dl,$16{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$cd
+	mov dh,$8
+	mov dl,$17
+	mov cx,$4
+	call @mov_cursor
+	call @dibuja
+	mov al,$bc
+	mov dh,$8
+	mov dl,$1b
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+	mov al,$ba{-----caracter------}
+	mov dh,$8{----cordenada fila----}
+	mov dl,$1d{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$ba{-----caracter------}
+	mov dh,$8
+	mov dl,$1f
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+	mov al,$c8{-----caracter------}
+	mov dh,$8{----cordenada fila----}
+	mov dl,$21{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$cd
+	mov dh,$8
+	mov dl,$22
+	mov cx,$b
+	call @mov_cursor
+	call @dibuja
+	mov al,$bb
+	mov dh,$8
+	mov dl,$2d
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+	mov al,$c9
+	mov dh,$8
+	mov dl,$34
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+	mov al,$cd
+	mov dh,$8
+	mov dl,$35
+	mov cx,$b
+	call @mov_cursor
+	call @dibuja
+	mov al,$bc
+	mov dh,$8
+	mov dl,$40
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+	mov al,$ba{-----caracter------}
+	mov dh,$8{----cordenada fila----}
+	mov dl,$42{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$ba
+	mov dh,$8
+	mov dl,$44
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+	mov al,$c8{-----caracter------}
+	mov dh,$8{----cordenada fila----}
+	mov dl,$46{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$cd
+	mov dh,$8
+	mov dl,$47
+	mov cx,$4
+	call @mov_cursor
+	call @dibuja
+	mov al,$bc
+	mov dh,$8
+	mov dl,$4b
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+
+	mov al,$ba
+	mov dh,$8
+	mov dl,$4d
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+
+
+
+
+    mov al,$ba{-----caracter------}
+	mov dh,$9{----cordenada fila----}
+	mov dl,$14{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+
+
+	mov al,$ba{-----caracter------}
+	mov dh,$9{----cordenada fila----}
+	mov dl,$1d{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$ba{-----caracter------}
+	mov dh,$9
+	mov dl,$1f
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+	mov al,$ba
+	mov dh,$9
+	mov dl,$2d
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+	mov al,$ba
+	mov dh,$9
+	mov dl,$34
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+	mov al,$ba{-----caracter------}
+	mov dh,$9{----cordenada fila----}
+	mov dl,$42{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$ba
+	mov dh,$9
+	mov dl,$44
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+	mov al,$ba
+	mov dh,$9
+	mov dl,$4d
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+
+
+
+
+
+
+	mov al,$c8{-----caracter------}
+	mov dh,$a{----cordenada fila----}
+	mov dl,$14{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$cd
+	mov dh,$a
+	mov dl,$15
+	mov cx,$6
+	call @mov_cursor
+	call @dibuja
+	mov al,$bb
+	mov dh,$a
+	mov dl,$1b
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+	mov al,$ba{-----caracter------}
+	mov dh,$a{----cordenada fila----}
+	mov dl,$1d{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+
+	mov al,$c8{-----caracter------}
+	mov dh,$a{----cordenada fila----}
+	mov dl,$1f{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$cd
+	mov dh,$a
+	mov dl,$20
+	mov cx,$9
+	call @mov_cursor
+	call @dibuja
+	mov al,$bb
+	mov dh,$a
+	mov dl,$29
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+	mov al,$ba
+	mov dh,$a
+	mov dl,$2d
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+	mov al,$ba
+	mov dh,$a
+	mov dl,$34
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+	call @mov_cursor
+	call @dibuja
+	mov al,$c9
+	mov dh,$a
+	mov dl,$38
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+	mov al,$cd
+	mov dh,$a
+	mov dl,$39
+	mov cx,$9
+	call @mov_cursor
+	call @dibuja
+
+
+
+
+
+
+
+
+
+
+	mov al,$bc{-----caracter------}
+	mov dh,$a{----cordenada fila----}
+	mov dl,$42{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$ba
+	mov dh,$a
+	mov dl,$44
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+	mov al,$c9{-----caracter------}
+	mov dh,$a{----cordenada fila----}
+	mov dl,$46{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$cd
+	mov dh,$a
+	mov dl,$47
+	mov cx,$7
+	call @mov_cursor
+	call @dibuja
+	mov al,$bc
+	mov dh,$a
+	mov dl,$4d
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+
+
+
+
+
+
+
+
+	mov al,$ba
+	mov dh,$b
+	mov dl,$1b
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+	mov al,$ba{-----caracter------}
+	mov dh,$b{----cordenada fila----}
+	mov dl,$1d{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+
+	mov al,$c9{-----caracter------}
+	mov dh,$b{----cordenada fila----}
+	mov dl,$1f{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$cd
+	mov dh,$b
+	mov dl,$20
+	mov cx,$9
+	call @mov_cursor
+	call @dibuja
+	mov al,$bc
+	mov dh,$b
+	mov dl,$29
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+	mov al,$c8
+	mov dh,$b
+	mov dl,$2d
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+	mov al,$cd
+	mov dh,$b
+	mov dl,$2e
+	mov cx,$6
+	call @mov_cursor
+	call @dibuja
+	mov al,$bc
+	mov dh,$b
+	mov dl,$34
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+	call @mov_cursor
+	call @dibuja
+	mov al,$c8
+	mov dh,$b
+	mov dl,$38
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+	mov al,$cd
+	mov dh,$b
+	mov dl,$39
+	mov cx,$9
+	call @mov_cursor
+	call @dibuja
+	mov al,$bb{-----caracter------}
+	mov dh,$b{----cordenada fila----}
+	mov dl,$42{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+
+
+	mov al,$ba
+	mov dh,$b
+	mov dl,$44
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+	mov al,$ba{-----caracter------}
+	mov dh,$b{----cordenada fila----}
+	mov dl,$46{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+
+
+
+
+
+
+
+
+	mov al,$c9{-----caracter------}
+	mov dh,$c{----cordenada fila----}
+	mov dl,$14{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$cd
+	mov dh,$c
+	mov dl,$15
+	mov cx,$6
+	call @mov_cursor
+	call @dibuja
+	mov al,$bc
+	mov dh,$c
+	mov dl,$1b
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+	mov al,$c8{-----caracter------}
+	mov dh,$c{----cordenada fila----}
+	mov dl,$1d{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$cd
+	mov dh,$c
+	mov dl,$1e
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+	mov al,$bc
+	mov dh,$c
+	mov dl,$1f
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+	mov al,$c8{-----caracter------}
+	mov dh,$c{----cordenada fila----}
+	mov dl,$42{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$cd
+	mov dh,$c
+	mov dl,$43
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+	mov al,$bc
+	mov dh,$c
+	mov dl,$44
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+	mov al,$c8{-----caracter------}
+	mov dh,$c{----cordenada fila----}
+	mov dl,$46{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$cd
+	mov dh,$c
+	mov dl,$47
+	mov cx,$7
+	call @mov_cursor
+	call @dibuja
+	mov al,$bb
+	mov dh,$c
+	mov dl,$4d
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+
+
+
+
+{eje sadddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd}
+
+
+	mov al,$ba{-----caracter------}
+	mov dh,$d{----cordenada fila----}
+	mov dl,$14{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja
+	mov al,$ba
+	mov dh,$d
+	mov dl,$4d
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+	mov al,$c8{-----caracter------}
+	mov dh,$e{----cordenada fila----}
+	mov dl,$14{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$cd
+	mov dh,$e
+	mov dl,$15
+	mov cx,$6
+	call @mov_cursor
+	call @dibuja
+	mov al,$bb
+	mov dh,$e
+	mov dl,$1b
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+	mov al,$c9{-----caracter------}
+	mov dh,$e{----cordenada fila----}
+	mov dl,$1d{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$cd
+	mov dh,$e
+	mov dl,$1e
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+	mov al,$bb
+	mov dh,$e
+	mov dl,$1f
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+	mov al,$c9{-----caracter------}
+	mov dh,$e{----cordenada fila----}
+	mov dl,$42{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$cd
+	mov dh,$e
+	mov dl,$43
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+	mov al,$bb
+	mov dh,$e
+	mov dl,$44
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+	mov al,$c9{-----caracter------}
+	mov dh,$e{----cordenada fila----}
+	mov dl,$46{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$cd
+	mov dh,$e
+	mov dl,$47
+	mov cx,$7
+	call @mov_cursor
+	call @dibuja
+	mov al,$bc
+	mov dh,$e
+	mov dl,$4d
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+
+
+
+
+
+	mov al,$ba
+	mov dh,$f
+	mov dl,$1b
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+	mov al,$ba{-----caracter------}
+	mov dh,$f{----cordenada fila----}
+	mov dl,$1d{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+
+	mov al,$c8{-----caracter------}
+	mov dh,$f{----cordenada fila----}
+	mov dl,$1f{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$cd
+	mov dh,$f
+	mov dl,$20
+	mov cx,$9
+	call @mov_cursor
+	call @dibuja
+	mov al,$bb
+	mov dh,$f
+	mov dl,$29
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+	mov al,$c9
+	mov dh,$f
+	mov dl,$2d
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+	mov al,$cd
+	mov dh,$f
+	mov dl,$2e
+	mov cx,$6
+	call @mov_cursor
+	call @dibuja
+	mov al,$bb
+	mov dh,$f
+	mov dl,$34
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+	call @mov_cursor
+	call @dibuja
+	mov al,$c9
+	mov dh,$f
+	mov dl,$38
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+	mov al,$cd
+	mov dh,$f
+	mov dl,$39
+	mov cx,$9
+	call @mov_cursor
+	call @dibuja
+	mov al,$bc{-----caracter------}
+	mov dh,$f{----cordenada fila----}
+	mov dl,$42{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+
+
+	mov al,$ba
+	mov dh,$f
+	mov dl,$44
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+	mov al,$ba{-----caracter------}
+	mov dh,$f{----cordenada fila----}
+	mov dl,$46{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+
+
+
+
+
+
+
+
+
+	mov al,$c9{-----caracter------}
+	mov dh,$10{----cordenada fila----}
+	mov dl,$14{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$cd
+	mov dh,$10
+	mov dl,$15
+	mov cx,$6
+	call @mov_cursor
+	call @dibuja
+	mov al,$bc
+	mov dh,$10
+	mov dl,$1b
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+	mov al,$ba{-----caracter------}
+	mov dh,$10{----cordenada fila----}
+	mov dl,$1d{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+
+	mov al,$c9{-----caracter------}
+	mov dh,$10{----cordenada fila----}
+	mov dl,$1f{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$cd
+	mov dh,$10
+	mov dl,$20
+	mov cx,$9
+	call @mov_cursor
+	call @dibuja
+	mov al,$bc
+	mov dh,$10
+	mov dl,$29
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+	mov al,$ba
+	mov dh,$10
+	mov dl,$2d
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+	mov al,$ba
+	mov dh,$10
+	mov dl,$34
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+	call @mov_cursor
+	call @dibuja
+	mov al,$c8
+	mov dh,$10
+	mov dl,$38
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+	mov al,$cd
+	mov dh,$10
+	mov dl,$39
+	mov cx,$9
+	call @mov_cursor
+	call @dibuja
+
+
+
+
+
+
+
+
+
+
+	mov al,$bb{-----caracter------}
+	mov dh,$10{----cordenada fila----}
+	mov dl,$42{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$ba
+	mov dh,$10
+	mov dl,$44
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+	mov al,$c8{-----caracter------}
+	mov dh,$10{----cordenada fila----}
+	mov dl,$46{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$cd
+	mov dh,$10
+	mov dl,$47
+	mov cx,$7
+	call @mov_cursor
+	call @dibuja
+	mov al,$bb
+	mov dh,$10
+	mov dl,$4d
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+    mov al,$ba{-----caracter------}
+	mov dh,$11{----cordenada fila----}
+	mov dl,$14{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+
+
+	mov al,$ba{-----caracter------}
+	mov dh,$11{----cordenada fila----}
+	mov dl,$1d{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$ba{-----caracter------}
+	mov dh,$11
+	mov dl,$1f
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+	mov al,$ba
+	mov dh,$11
+	mov dl,$2d
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+	mov al,$ba
+	mov dh,$11
+	mov dl,$34
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+	mov al,$ba{-----caracter------}
+	mov dh,$11{----cordenada fila----}
+	mov dl,$42{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$ba
+	mov dh,$11
+	mov dl,$44
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+	mov al,$ba
+	mov dh,$11
+	mov dl,$4d
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+
+
+
+
+
+
+
+
+
+
+   
+
+    mov al,$ba{-----caracter------}
+	mov dh,$12{----cordenada fila----}
+	mov dl,$14{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+
+
+	mov al,$c9{-----caracter------}
+	mov dh,$12{----cordenada fila----}
+	mov dl,$16{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$cd
+	mov dh,$12
+	mov dl,$17
+	mov cx,$4
+	call @mov_cursor
+	call @dibuja
+	mov al,$bb
+	mov dh,$12
+	mov dl,$1b
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+	mov al,$ba{-----caracter------}
+	mov dh,$12{----cordenada fila----}
+	mov dl,$1d{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$ba{-----caracter------}
+	mov dh,$12
+	mov dl,$1f
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+	mov al,$c9{-----caracter------}
+	mov dh,$12{----cordenada fila----}
+	mov dl,$21{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$cd
+	mov dh,$12
+	mov dl,$22
+	mov cx,$b
+	call @mov_cursor
+	call @dibuja
+	mov al,$bc
+	mov dh,$12
+	mov dl,$2d
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+	mov al,$c8
+	mov dh,$12
+	mov dl,$34
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+	mov al,$cd
+	mov dh,$12
+	mov dl,$35
+	mov cx,$b
+	call @mov_cursor
+	call @dibuja
+	mov al,$bb
+	mov dh,$12
+	mov dl,$40
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+	mov al,$ba{-----caracter------}
+	mov dh,$12{----cordenada fila----}
+	mov dl,$42{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$ba
+	mov dh,$12
+	mov dl,$44
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+	mov al,$c9{-----caracter------}
+	mov dh,$12{----cordenada fila----}
+	mov dl,$46{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$cd
+	mov dh,$12
+	mov dl,$47
+	mov cx,$4
+	call @mov_cursor
+	call @dibuja
+	mov al,$bb
+	mov dh,$12
+	mov dl,$4b
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+
+	mov al,$ba
+	mov dh,$12
+	mov dl,$4d
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+
+	mov al,$ba{-----caracter------}
+	mov dh,$13{----cordenada fila----}
+	mov dl,$14{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+
+
+	mov al,$c8{-----caracter------}
+	mov dh,$13{----cordenada fila----}
+	mov dl,$16{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$cd
+	mov dh,$13
+	mov dl,$17
+	mov cx,$4
+	call @mov_cursor
+	call @dibuja
+	mov al,$bc
+	mov dh,$13
+	mov dl,$1b
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+	mov al,$c8{-----caracter------}
+	mov dh,$13{----cordenada fila----}
+	mov dl,$1d{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$cd
+	mov dh,$13
+	mov dl,$1e
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+	mov al,$bc
+	mov dh,$13
+	mov dl,$1f
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+	mov al,$c8{-----caracter------}
+	mov dh,$13{----cordenada fila----}
+	mov dl,$21{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$cd
+	mov dh,$13
+	mov dl,$22
+	mov cx,$1e
+	call @mov_cursor
+	call @dibuja
+	mov al,$bc
+	mov dh,$13
+	mov dl,$40
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+	mov al,$c8{-----caracter------}
+	mov dh,$13{----cordenada fila----}
+	mov dl,$42{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$cd
+	mov dh,$13
+	mov dl,$43
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+	mov al,$bc
+	mov dh,$13
+	mov dl,$44
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+	mov al,$c8{-----caracter------}
+	mov dh,$13{----cordenada fila----}
+	mov dl,$46{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$cd
+	mov dh,$13
+	mov dl,$47
+	mov cx,$4
+	call @mov_cursor
+	call @dibuja
+	mov al,$bc
+	mov dh,$13
+	mov dl,$4b
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+	mov al,$ba
+	mov dh,$13
+	mov dl,$4d
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+	mov al,$ba{-----caracter------}
+	mov dh,$14{----cordenada fila----}
+	mov dl,$14{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja
+	mov al,$ba
+	mov dh,$14
+	mov dl,$4d
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+
+	mov al,$ba{-----caracter------}
+	mov dh,$15{----cordenada fila----}
+	mov dl,$14{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$c9
+	mov dh,$15
+	mov dl,$2f
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+	mov al,$cd
+	mov dh,$15
+	mov dl,$30
+	mov cx,$2
+	call @mov_cursor
+	call @dibuja
+	mov al,$bb
+	mov dh,$15
+	mov dl,$32
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+	mov al,$ba
+	mov dh,$15
+	mov dl,$4d
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+	mov al,$c8{-----caracter------}
+	mov dh,$16{----cordenada fila----}
+	mov dl,$14{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$cd
+	mov dh,$16
+	mov dl,$15
+	mov cx,$1a
+	call @mov_cursor
+	call @dibuja
+	mov al,$bc
+	mov dh,$16
+	mov dl,$2f
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+	mov al,$c8
+	mov dh,$16
+	mov dl,$32
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+	mov al,$cd
+	mov dh,$16
+	mov dl,$33
+	mov cx,$1a
+	call @mov_cursor
+	call @dibuja
+	mov al,$bc
+	mov dh,$16
+	mov dl,$4d
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+ret
+
+{-------------------------------------------------------------------------------------}
+								{PUNTOS}
+{--------------------------------------------------------------------------------------}
+
+ @puntos:{}
+	mov bl,$f{-------se determina el colo del cuadro de juego}
+	mov al,$7{-----caracter------}
+	mov dh,$3{----cordenada fila----}
+	mov dl,$15{----cordenada fila----}
+	mov cx,$1a {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$7
+	mov dh,$3
+	mov dl,$33
+	mov cx,$1a
+	call @mov_cursor
+	call @dibuja
+
+
+	mov al,$7{-----caracter------}
+	mov dh,$4{----cordenada fila----}
+	mov dl,$15{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$7
+	mov dh,$4
+	mov dl,$1c
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+	mov al,$7
+	mov dh,$4
+	mov dl,$2e
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+
+
+	mov al,$7
+	mov dh,$4
+	mov dl,$33
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+
+	mov al,$7
+	mov dh,$4
+	mov dl,$45
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+	mov al,$7
+	mov dh,$4
+	mov dl,$4c
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+	mov bl,$c
+	mov al,$9{-----caracter------}
+	mov dh,$5{----cordenada fila----}
+	mov dl,$15{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov bl,$f
+	mov al,$7
+	mov dh,$5
+	mov dl,$1c
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+	mov al,$7
+	mov dh,$5
+	mov dl,$2e
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+
+
+	mov al,$7
+	mov dh,$5
+	mov dl,$33
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+
+	mov al,$7
+	mov dh,$5
+	mov dl,$45
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+	mov bl,$c
+	mov al,$9{-----caracter------}
+	mov dh,$5
+	mov dl,$4c
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+	mov bl,$f
+	mov al,$7{-----caracter------}
+	mov dh,$6{----cordenada fila----}
+	mov dl,$15{----cordenada fila----}
+	mov cx,$38{----repeticion----}
+	call @mov_cursor
+	call @dibuja
+
+	mov al,$7{-----caracter------}
+	mov dh,$7{----cordenada fila----}
+	mov dl,$15{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov al,$7
+	mov dh,$7
+	mov dl,$1c
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+	mov al,$7
+	mov dh,$7
+	mov dl,$20
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+
+
+	mov al,$7
+	mov dh,$7
+	mov dl,$41
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+
+	mov al,$7
+	mov dh,$7
+	mov dl,$45
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+	mov al,$7
+	mov dh,$7
+	mov dl,$4c
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+
+	mov al,$7{-----caracter------}
+	mov dh,$8{----cordenada fila----}
+	mov dl,$15{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+
+	mov al,$7
+	mov dh,$8
+	mov dl,$1c
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+	mov al,$7
+	mov dh,$8
+	mov dl,$20
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+
+
+	mov al,$7
+	mov dh,$8
+	mov dl,$41
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+
+	mov al,$7
+	mov dh,$8
+	mov dl,$45
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+	mov al,$7
+	mov dh,$8
+	mov dl,$4c
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+	mov al,$7{-----caracter------}
+	mov dh,$9{----cordenada fila----}
+	mov dl,$15{----cordenada fila----}
+	mov cx,$8 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+
+	mov al,$7
+	mov dh,$9
+	mov dl,$20
+	mov cx,$d
+	call @mov_cursor
+	call @dibuja
+
+
+	mov al,$7
+	mov dh,$9
+	mov dl,$35
+	mov cx,$d
+	call @mov_cursor
+	call @dibuja
+	mov al,$7
+	mov dh,$9
+	mov dl,$45
+	mov cx,$8
+	call @mov_cursor
+	call @dibuja
+
+
+
+	
+	mov al,$7
+	mov dh,$a
+	mov dl,$1c
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+	mov al,$7
+	mov dh,$a
+	mov dl,$2a
+	mov cx,$3
+	call @mov_cursor
+	call @dibuja
+
+	mov al,$7
+	mov dh,$a
+	mov dl,$35
+	mov cx,$3
+	call @mov_cursor
+	call @dibuja
+
+
+	mov al,$7
+	mov dh,$a
+	mov dl,$45
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+
+	mov al,$7{-----caracter------}
+	mov dh,$b{----cordenada fila----}
+	mov dl,$1c{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja
+	mov al,$7
+	mov dh,$b
+	mov dl,$2a 
+	mov cx,$3
+	call @mov_cursor
+	call @dibuja
+	mov al,$7
+	mov dh,$b
+	mov dl,$35
+	mov cx,$3
+	call @mov_cursor
+	call @dibuja
+
+	call @mov_cursor
+	call @dibuja
+	mov dh,$b 
+	mov dl,$45
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+    mov al,$7{-----caracter------}
+	mov dh,$c{----cordenada fila----}
+	mov dl,$1c{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja
+	mov al,$7
+	mov dh,$c
+	mov dl,$20
+	mov cx,$22
+	call @mov_cursor
+	call @dibuja
+
+
+	mov dh,$c 
+	mov dl,$45
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+{ --------------------mitad ----------------------------------}
+	mov al,$7{-----caracter------}
+	mov dh,$d{----cordenada fila----}
+	mov dl,$15{----cordenada fila----}
+	mov cx,$13{----repeticion----}
+	call @mov_cursor
+	call @dibuja
+	mov al,$7{-----caracter------}
+	mov dh,$d{----cordenada fila----}
+	mov dl,$3a{----cordenada fila----}
+	mov cx,$13{----repeticion----}
+	call @mov_cursor
+	call @dibuja
+
+
+
+    mov al,$7{-----caracter------}
+	mov dh,$e{----cordenada fila----}
+	mov dl,$1c{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja
+	mov al,$7
+	mov dh,$e
+	mov dl,$20
+	mov cx,$16
+	call @mov_cursor
+	call @dibuja
+	mov al,$80
+	mov bl,$4
+	mov dh,$e
+	mov dl,$31
+	mov cx,$1
+	call @mov_cursor{--------------------fruta------------------}
+	call @dibuja
+	mov bl,$f
+	mov al,$7
+	mov dh,$e
+	mov dl,$32
+	mov cx,$10
+	call @mov_cursor
+	call @dibuja
+
+	mov dh,$e 
+	mov dl,$45
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+
+	mov al,$7{-----caracter------}
+	mov dh,$f{----cordenada fila----}
+	mov dl,$1c{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja
+	mov al,$7
+	mov dh,$f
+	mov dl,$2a 
+	mov cx,$3
+	call @mov_cursor
+	call @dibuja
+	mov al,$7
+	mov dh,$f
+	mov dl,$35
+	mov cx,$3
+	call @mov_cursor
+	call @dibuja
+
+	call @mov_cursor
+	call @dibuja
+	mov dh,$f 
+	mov dl,$45
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+	mov al,$7
+	mov dh,$10
+	mov dl,$1c
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+	mov al,$7
+	mov dh,$10
+	mov dl,$2a
+	mov cx,$3
+	call @mov_cursor
+	call @dibuja
+
+	mov al,$7
+	mov dh,$10
+	mov dl,$35
+	mov cx,$3
+	call @mov_cursor
+	call @dibuja
+
+
+	mov al,$7
+	mov dh,$10
+	mov dl,$45
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+		mov al,$7{-----caracter------}
+	mov dh,$11{----cordenada fila----}
+	mov dl,$15{----cordenada fila----}
+	mov cx,$8 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+
+	mov al,$7
+	mov dh,$11
+	mov dl,$20
+	mov cx,$d
+	call @mov_cursor
+	call @dibuja
+
+
+	mov al,$7
+	mov dh,$11
+	mov dl,$35
+	mov cx,$d
+	call @mov_cursor
+	call @dibuja
+	mov al,$7
+	mov dh,$11
+	mov dl,$45
+	mov cx,$8
+	call @mov_cursor
+	call @dibuja
+
+
+		mov al,$7{-----caracter------}
+	mov dh,$12{----cordenada fila----}
+	mov dl,$15{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+
+	mov al,$7
+	mov dh,$12
+	mov dl,$1c
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+	mov al,$7
+	mov dh,$12
+	mov dl,$20
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+
+
+	mov al,$7
+	mov dh,$12
+	mov dl,$41
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+
+	mov al,$7
+	mov dh,$12
+	mov dl,$45
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+	mov al,$7
+	mov dh,$12
+	mov dl,$4c
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+	mov bl,$c
+	mov al,$9{-----caracter------}
+	mov dh,$13{----cordenada fila----}
+	mov dl,$15{----cordenada fila----}
+	mov cx,$1 {----repeticion----}
+
+	call @mov_cursor{----mueve el cursor a la pocicion de las cordenadas---}
+	call @dibuja{---imprime el dibujo---}
+	mov bl,$f
+	mov al,$7
+	mov dh,$13
+	mov dl,$1c
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+	mov al,$7
+	mov dh,$13
+	mov dl,$20
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+
+
+	mov al,$7
+	mov dh,$13
+	mov dl,$41
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+
+	mov al,$7
+	mov dh,$13
+	mov dl,$45
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+
+
+
+	mov bl,$c
+	mov al,$9{-----caracter------}
+	mov dh,$13
+	mov dl,$4c
+	mov cx,$1
+	call @mov_cursor
+	call @dibuja
+	mov bl,$f
+	mov al,$7{-----caracter------}
+	mov dh,$14{----cordenada fila----}
+	mov dl,$15{----cordenada fila----}
+	mov cx,$1a{----repeticion----}
+	call @mov_cursor
+	call @dibuja
+	mov al,$7{-----caracter------}
+	mov dh,$14{----cordenada fila----}
+	mov dl,$33{----cordenada fila----}
+	mov cx,$1a{----repeticion----}
+	call @mov_cursor
+	call @dibuja
+	mov al,$7{-----caracter------}
+	mov dh,$15{----cordenada fila----}
+	mov dl,$15{----cordenada fila----}
+	mov cx,$1a{----repeticion----}
+	call @mov_cursor
+	call @dibuja
+	mov al,$7{-----caracter------}
+	mov dh,$15{----cordenada fila----}
+	mov dl,$33{----cordenada fila----}
+	mov cx,$1a{----repeticion----}
+	call @mov_cursor
+	call @dibuja
+	call @cursor_off
+ ret
+ @print_juga3:{----------pacman jugador--------- }
+ 	mov al,$2{-----caracter------}
+ 	mov bl,$e
+	mov dh,$14{----cordenada fila----}
+	mov dl,$31{----cordenada fila----}
+	mov cx,$1{----repeticion----}
+	call @mov_cursor
+	call @dibuja
+ret
+      @cursor_off:
+      PUSH AX
+       PUSH CX
+       MOV CH,$32
+       MOV AH,$1
+       INT $10
+       POP AX
+       POP CX
+       RET
+
+
+    @PRINTFANTASMA:{--------------------fantasma 1----------------------------}
+               MOV DH,$d
+               MOV DL,$2E
+               MOV [1234],DX
+               MOV AL,$3
+               MOV BL,$4
+               MOV CX,$1
+               call @mov_cursor
+               call @dibuja
+               RET
+@PRINTFANTASMA1:{--------------------fantasma 2----------------------------}
+               MOV DH,$d
+               MOV DL,$30
+               MOV [1334],DX
+               MOV AL,$4
+               MOV BL,$2
+               MOV CX,$1
+               call @mov_cursor
+               call @dibuja
+               RET
+@PRINTFANTASMA2:{--------------------fantasma 3----------------------------}
+               MOV DH,$d
+               MOV DL,$32
+               MOV [1436],DX
+               MOV AL,$5
+               MOV BL,$9
+               MOV CX,$1
+               call @mov_cursor
+               call @dibuja
+               RET
+@PRINTFANTASMA3:{--------------------fantasma 4----------------------------}
+               MOV DH,$d
+               MOV DL,$34
+               MOV [1537],DX
+               MOV AL,$6
+               MOV BL,$5
+               MOV CX,$1
+               call @mov_cursor
+               call @dibuja
+               RET
+
+
+{--------------------------------------------------------------------}
+						{mandos}
+{--------------------------------------------------------------------}
+
+@mandos:	      
+		  
+		   MOV AH,$0
+           INT $16
+           CMP AH,$4B
+           JE @left{-----------------------si la flecha es <- -------------------}
+           CMP AH,$48
+           JE @up{-----------------------si la flecha es ariba-------------------}
+           CMP AH,$4D
+           JE @rigth{-----------------------si la flecha es -> ------------------}
+           CMP AH,$50
+           JE @down{-----------------------si la flecha es abajo ------------------}
+           CMP AH,$1
+           JE @FIN
+           JMP @mandos
+
+
+{@si3000:
+         MOV DL,$7
+	       MOV AH,$2
+           INT $10
+           MOV AH,$8
+           INT $10
+           CMP AL,$33
+           je @fin}
+
+@rigth:
+        MOV AH,$1
+        INT $16
+        JNZ @mandos
+
+        MOV AH,$9
+        MOV AL,$2
+        MOV BL,$E
+        INT $10
+
+        INC DL
+        MOV AH,$2
+        INT $10
+        MOV AH,$8
+        INT $10
+
+        DEC DL
+        MOV AH,$2
+        INT $10
+
+        CMP AL,$cd
+        JE @down
+        CMP AL,$BA
+        JE @left
+        CMP AL,$bc
+        JE @mandos
+        CMP AL,$c8
+        JE @left
+        CMP AL,$c9
+        JE @left
+        CMP AL,$bb
+        JE @mandos
+
+        MOV [5678],DX
+        CALL @PUNTAJE
+	    call @PRINTFANTASMA
+        CALL @MOVERFANTASMA
+        MOV DX,[5678]
+        MOV AH,$2
+        INT $10
+        CALL @FPS
+
+        MOV AH,$A
+        MOV AL,$0
+        MOV CX,$1
+        INT $10
+
+        INC DL
+        MOV AH,$2
+        INT $10
+        MOV AH,$9
+        MOV AL,$10
+        MOV BL,$E
+        INT $10
+        
+        JMP @rigth
+
+ @left:
+        MOV AH,$1
+        INT $16
+        JNZ @mandos
+
+        MOV AH,$9
+        MOV AL,$2
+        MOV BL,$E
+        INT $10
+
+        DEC DL
+        MOV AH,$2
+        INT $10
+        MOV AH,$8
+        INT $10
+
+        INC DL
+        MOV AH,$2
+        INT $10
+
+        CMP AL,$cd
+        JE @mandos
+        CMP AL,$BA
+        JE @rigth
+        CMP AL,$bc
+        JE @rigth
+        CMP AL,$c8
+        JE @mandos
+        CMP AL,$c9
+        JE @mandos
+        CMP AL,$bb
+        JE @rigth
+
+        MOV [5678],DX
+        CALL @PUNTAJE
+        call @PRINTFANTASMA
+        CALL @MOVERFANTASMA
+        MOV DX,[5678]
+        MOV AH,$2
+        INT $10
+        CALL @FPS
+
+        MOV AH,$A
+        MOV AL,$0
+        MOV CX,$1
+        INT $10
+
+        DEC DL
+        MOV AH,$2
+        INT $10
+        MOV AH,$9
+        MOV AL,$11
+        MOV BL,$E
+        INT $10
+        JMP @left
+
+@down:
+        MOV AH,$1
+        INT $16
+        JNZ @mandos
+
+        MOV AH,$9
+        MOV AL,$2
+        MOV BL,$E
+        INT $10
+
+        INC DH
+        MOV AH,$2
+        INT $10
+        MOV AH,$8
+        INT $10
+
+        DEC DH
+        MOV AH,$2
+        INT $10
+
+        CMP AL,$cd
+        JE @up
+        CMP AL,$BA
+        JE @mandos
+        CMP AL,$bc
+        JE @mandos
+        CMP AL,$c8
+        JE @mandos
+        CMP AL,$c9
+        JE @up
+        CMP AL,$bb
+        JE @up
+
+        MOV [5678],DX
+        CALL @PUNTAJE
+        call @PRINTFANTASMA
+        CALL @MOVERFANTASMA
+        MOV DX,[5678]
+        MOV AH,$2
+        INT $10
+        CALL @FPS
+
+        MOV AH,$A
+        MOV AL,$0
+        MOV CX,$1
+        INT $10
+
+        INC DH
+        MOV AH,$2
+        INT $10
+        MOV AH,$9
+        MOV AL,$1F
+        MOV BL,$E
+        INT $10
+        JMP @down
+
+@up:
+        MOV AH,$1
+        INT $16
+        JNZ @mandos
+
+        MOV AH,$9
+        MOV AL,$2
+        MOV BL,$E
+        INT $10
+
+        DEC DH
+        MOV AH,$2
+        INT $10
+        MOV AH,$8
+        INT $10
+
+        INC DH
+        MOV AH,$2
+        INT $10
+
+        CMP AL,$cd
+        JE @down
+        CMP AL,$BA
+        JE @mandos
+        CMP AL,$bc
+        JE @down
+        CMP AL,$c8
+        JE @down
+        CMP AL,$c9
+        JE @mandos
+        CMP AL,$bb
+        JE @mandos
+
+        MOV [5678],DX
+        CALL @MOVERFANTASMA
+        CALL @PUNTAJE
+        MOV DX,[5678]
+        MOV AH,$2
+        INT $10
+        CALL @FPS
+
+        MOV AH,$A
+        MOV AL,$0
+        MOV CX,$1
+        INT $10
+
+        DEC DH
+        MOV AH,$2
+        INT $10
+        MOV AH,$9
+        MOV AL,$1E
+        MOV BL,$E
+        INT $10
+        JMP @up
+@FPS:
+     PUSH AX
+     PUSH CX
+     PUSH DX
+
+     MOV AH,$86
+     MOV DX,$eeeF
+     MOV CX,$1
+     INT $15
+
+     POP DX
+     POP CX
+     POP AX
+
+     RET
+
+	
+
+
+
+
+     {---------------------------------------------------------------}
+     						{puntaje}
+     {---------------------------------------------------------------}
+
+@PUNTAJE:
+
+         MOV AH,$2
+         MOV DH,$6
+         MOV DL,$a
+         INT $10
+         CMP AL,$9
+         JE @SUBIRESP
+         CMP AL,$80
+         JE @SUBIRfruta
+         CMP AL,$7
+         JE @SUBIRNORMAL
+         {CMP AL,$7
+         je @si3000}
+         {CMP AL,$3
+         JE @fin 
+         CMP AL,$4
+         JE @fin
+         CMP AL,$5
+         JE @fin
+         CMP AL,$6
+         JE @fin}
+		
+         RET
+
+@SUBIRfruta:{---------------------puntaje fruta-------------------}
+			call @SUBIRNORMAL
+			call @treinta
+			call @quinientos
+            jmp @puntaje
+@quinientos:
+			dec dl
+           MOV AH,$2
+           INT $10
+           MOV AH,$8
+           INT $10
+           CMP AL,$36
+           JE @SUBIRESPCINCO
+           CMP AL,$37
+           JE @SUBIRESPSEIS
+           CMP AL,$38
+           JE @SUBIRESPSIETE
+           CMP AL,$39
+           JE @SUBIRESPOCHO
+           ADD AL,$5
+           MOV AH,$A
+           INT $10
+           ret
+@treinta:
+	       dec dl
+           mov dl,$9
+           MOV AH,$2
+           INT $10
+           MOV AH,$8
+           INT $10
+           CMP AL,$37
+           JE @SUBIRESPCINCO
+           
+           CMP AL,$38
+           JE @SUBIRESPSEIS
+           
+           CMP AL,$39
+           JE @SUBIRESPSIETE
+
+           ADD AL,$3
+           MOV AH,$A
+           INT $10
+           ret
+
+
+
+@SUBIRNORMAL:
+             MOV AH,$8
+             INT $10
+             CMP AL,$39
+             JE @NUEVE
+             INC AL
+             MOV AH,$A
+             INT $10
+
+             jmp @puntaje
+
+@NUEVE:
+       MOV AH,$A
+       MOV AL,$30
+       INT $10
+       DEC DL
+       MOV AH,$2
+       INT $10
+       MOV AH,$8
+       INT $10
+       CMP AL,$39
+       JE @NUEVE
+       INC AL
+       MOV AH,$A
+       INT $10
+       jmp @puntaje
+
+@SUBIRESP:
+           mov dh,6
+           mov dl,8
+           MOV AH,$2
+           INT $10
+           MOV AH,$8
+           INT $10
+           CMP AL,$35
+           JE @SUBIRESPCINCO
+           CMP AL,$36
+           JE @SUBIRESPSEIS
+           CMP AL,$37
+           JE @SUBIRESPSIETE
+           CMP AL,$38
+           JE @SUBIRESPOCHO
+           CMP AL,$39
+           JE @SUBIRESPNUEVE
+           ADD AL,$5
+           MOV AH,$A
+           INT $10
+
+           jmp @PUNTAJE
+
+@SUBIRESPCINCO:
+               MOV AH,$A
+               MOV AL,$30
+               INT $10
+               DEC DL
+               MOV AH,$2
+               INT $10
+               mov ah,$8
+               int $10
+               INC AL
+               MOV AH,$A
+               INT $10
+               jmp @puntaje
+
+@SUBIRESPSEIS:
+               MOV AH,$A
+               MOV AL,$31
+               INT $10
+               DEC DL
+               MOV AH,$2
+               INT $10
+               mov ah,$8
+               int $10
+               INC AL
+               MOV AH,$A
+               INT $10
+               jmp @puntaje
+
+@SUBIRESPSIETE:
+               MOV AH,$A
+               MOV AL,$32
+               INT $10
+               DEC DL
+               MOV AH,$2
+               INT $10
+               mov ah,$8
+               int $10
+               INC AL
+               MOV AH,$A
+               INT $10
+               jmp @PUNTAJE
+
+@SUBIRESPOCHO:
+               MOV AH,$A
+               MOV AL,$33
+               INT $10
+               DEC DL
+               MOV AH,$2
+               INT $10
+               mov ah,$8
+               int $10
+               INC AL
+               MOV AH,$A
+               INT $10
+               jmp @PUNTAJE
+
+@SUBIRESPNUEVE:
+               MOV AH,$A
+               MOV AL,$34
+               INT $10
+               DEC DL
+               MOV AH,$2
+               INT $10
+               mov ah,$8
+               int $10
+               INC AL
+               MOV AH,$A
+               INT $10
+               jmp @PUNTAJE
+
+               {----------------------------------------------------}
+               {====================================================}
+               					{MOVERF ANTASMA}
+               {====================================================}
+               {----------------------------------------------------}
+
+@MOVERFANTASMA:
+	mov dx,[1234]
+	mov cx,[5678]
+	cmp dx,cx
+	je @fin
+ret
+
+
+		{==================================================}
+	@fin: {Finaliza el programa, acondiciona el entorno para retornar
+	{===================================================}
+		{call @prender_cursor}
+		call @cls
+		mov dh,$9 					{Set cursor fila}
+		mov dl,$0					{Set cursor columna}
+		{call @mov_cursor 	mover cursor de la pantalla}
+	nop
+
+end;
+end.

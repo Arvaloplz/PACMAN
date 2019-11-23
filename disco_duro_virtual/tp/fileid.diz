@@ -1,0 +1,7 @@
+Patch for Turbo Pascal 7.x
+run time library TURBO.TPL
+to fix the Run Time Error 200
+bug on fast PC's.
+
+Klaus Hartnegg
+hartnegg@gmx.net
