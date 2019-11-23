@@ -1,4 +1,4 @@
 # PACMAN
 PACMAN turbopascal lenguaje with DOS instructions 
 
-![alt text](/path/img.PNG "Demo")
+![alt text](img.PNG "Demo")
